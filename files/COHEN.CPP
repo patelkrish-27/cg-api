@@ -1,82 +1,87 @@
-#include<stdio.h>
-#include<conio.h>
-#include<graphics.h>
+#include <stdio.h>
+#include <graphics.h>
 
-float rcode(float x,float y,float xmax,float ymax,float xmin,float ymin){
-float code = 0;
-if(y>ymax){
-	code +=8;
-	}
-if(y<ymin){
-	code += 4;
-	}
-if(x<xmin){
-	code += 1;
-	}
-if(x>xmax){
-	code += 2;
-	}
-return code;
+// Constants for region codes
+const int INSIDE = 0; // 0000
+const int LEFT = 1;	  // 0001
+const int RIGHT = 2;  // 0010
+const int BOTTOM = 4; // 0100
+const int TOP = 8;	  // 1000
+
+// Function to calculate the region code of a point
+int regionCode(float x, float y, float xmin, float xmax, float ymin, float ymax)
+{
+	int code = INSIDE;
+
+	if (x < xmin)
+		code |= LEFT;
+	if (x > xmax)
+		code |= RIGHT;
+	if (y < ymin)
+		code |= BOTTOM;
+	if (y > ymax)
+		code |= TOP;
+
+	return code;
 }
-void main(){
-	int gd = DETECT,gm;
 
-	float x1,y1, x2, y2,xmin,ymin,xmax,ymax,px1,py1,px2,py2;	//interested window points
-	float m;
-	clrscr();
-	initgraph(&gd,&gm,"c:\\TURBOC3\\BGI");
-	printf("Enter the line points x1 y1 x2 y2 :");
-	scanf("%f %f %f %f",&x1,&y1,&x2,&y2);
-	printf("Enter xmin xmax ymin ymax: ");
-	scanf("%f %f %f %f",&xmin,&xmax,&ymin,&ymax);
+// Function to calculate the intersection point
+void calculateIntersection(float x1, float y1, float m, int regionCode, float xmin, float xmax, float ymin, float ymax, float *ix, float *iy)
+{
+	if (regionCode & TOP)
+	{
+		*ix = x1 + (ymax - y1) / m;
+		*iy = ymax;
+	}
+	else if (regionCode & BOTTOM)
+	{
+		*ix = x1 + (ymin - y1) / m;
+		*iy = ymin;
+	}
+	else if (regionCode & RIGHT)
+	{
+		*iy = y1 + m * (xmax - x1);
+		*ix = xmax;
+	}
+	else if (regionCode & LEFT)
+	{
+		*iy = y1 + m * (xmin - x1);
+		*ix = xmin;
+	}
+}
 
-	int code1 = rcode(x1,y1,xmax,ymax,xmin,ymin);
-	int code2 = rcode(x2,y2,xmax,ymax,xmin,ymin);
-	if(!(code1 | code2)){
-	printf("Accepted");
+int main()
+{
+	int gd = DETECT, gm;
+	float p1x = 10, p1y = 30, p2x = 80, p2y = 90;
+	float xmin = 20, ymin = 20, xmax = 90, ymax = 70;
+	float m = (p2y - p1y) / (p2x - p1x);
+	float currentx1 = p1x, currentx2 = p2x, currenty1 = p1y, currenty2 = p2y;
+
+	int p1rc = regionCode(p1x, p1y, xmin, xmax, ymin, ymax);
+	int p2rc = regionCode(p2x, p2y, xmin, xmax, ymin, ymax);
+
+	if (p1rc != INSIDE)
+	{
+		calculateIntersection(p1x, p1y, m, p1rc, xmin, xmax, ymin, ymax, &currentx1, &currenty1);
 	}
-	else if((code1 &  code2) == 0){
-	//finding intersection point
-	m = (y2-y1)/(x2-x1);
-	if(code1){
-		if(x1<=xmin){
-			px1 = xmin;
-			py1 = y1 +m*(px1-x1);
-		}else if(x1>=xmax){
-			px1 = xmax;
-			py1 = y1 + m*(px1-x1);
-		}else if(y1>=ymax){
-			py1 = ymax;
-			px1 = x1 + (1/m)*(py1-y1);
-		}else if(y1<=ymin){
-			py1 = ymin;
-			px1 = x1 + (1/m)*(py1-y1);
-		}
+
+	if (p2rc != INSIDE)
+	{
+		calculateIntersection(p2x, p2y, m, p2rc, xmin, xmax, ymin, ymax, &currentx2, &currenty2);
 	}
-	if(code2){
-		if(x2<=xmin){
-			px2 = xmin;
-			py2 = y2 +m*(px2-x2);
-		}else if(x2>=xmax){
-			px2 = xmax;
-			py2 = y2 + m*(px2-x2);
-		}else if(y2>=ymax){
-			py2 = ymax;
-			px2 = x2 + (1/m)*(py2-y2);
-		}else if(y2<=ymin){
-			py2 = ymin;
-			px2 = x2 + (1/m)*(py2-y2);
-		}
-	}
-	ymin += 100;
-	ymax += 100;
-	line(x1,y1,x2,y2);
-	rectangle(xmin,ymax,xmax,ymin);
-	rectangle(200+xmin,ymax,200+xmax,ymin);
-	line(px1+200,py1,px2+200,py2);
-	}
+
+	initgraph(&gd, &gm, "C:\\TURBOC3\\BGI");
+	settextstyle(DEFAULT_FONT, HORIZ_DIR, 1);
+	outtextxy(10, 5, "Before Clipping");
+	rectangle((int)xmin, (int)ymin, (int)xmax, (int)ymax);
+	line((int)p1x, (int)p1y, (int)p2x, (int)p2y);
+
+	outtextxy(160, 5, "After Clipping");
+	rectangle((int)xmin + 150, (int)ymin, (int)xmax + 150, (int)ymax);
+	line((int)currentx1 + 150, (int)currenty1, (int)currentx2 + 150, (int)currenty2);
+
 	getch();
+	closegraph();
+	return 0;
 }
-
-// input 1 : 10 120 90 300
-//input 2 : 50 100 100 250
