@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <graphics.h>
+#include <conio.h>
 
 int main()
 {
@@ -10,7 +11,7 @@ int main()
     float dx = x2 - x1, dy = y2 - y1;
     float m = dy / dx;
     float xi = x1, yi = y1;
-    
+
     // Drawing line based on slope
     if (dx >= dy)
     {

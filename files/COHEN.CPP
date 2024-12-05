@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <graphics.h>
+#include <conio.h>
 
 // Constants for region codes
 const int INSIDE = 0; // 0000
