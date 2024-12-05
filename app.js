@@ -6,7 +6,7 @@ const PORT = 3000;
 
 
 app.get("/:name", (req, res) => {
-  const filePath = path.join(__dirname, "files", `${req.params.name}.CPP`); // Path to your file
+  const filePath = path.join(__dirname, "files", `${req.params.name}.cpp`); // Path to your file
   res.download(filePath, `${req.params.name}.CPP`, (err) => {
     if (err) {
       console.error("Error while sending the file:", err);
